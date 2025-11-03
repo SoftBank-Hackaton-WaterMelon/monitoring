@@ -1,34 +1,35 @@
 global:
-  # 수집 주기 60초
+  # 수집 주기 60초 (요청 반영)
   scrape_interval: 60s
+  # 룰 평가 주기 (옵션)
+  evaluation_interval: 60s
+  # 스크랩 타임아웃 (옵션)
+  scrape_timeout: 10s
+
+# (옵션) 외부 라벨: 여러 프로메테우스를 모을 때 구분용
+# external_labels:
+#   cluster: local-dev
 
 scrape_configs:
-  # Prometheus 자기 자신
+  # 1) Prometheus 자기 자신
   - job_name: prometheus
     static_configs:
       - targets: ['prometheus:9090']
+        labels:
+          service: prometheus
 
-  # cAdvisor(컨테이너 리소스 메트릭)
+  # 2) cAdvisor (컨테이너 리소스 메트릭)
   - job_name: cadvisor
     static_configs:
       - targets: ['cadvisor:8080']
+        labels:
+          service: cadvisor
 
-  # demo-backend 앱 메트릭 (/metrics)
-  # 같은 compose 네트워크가 아니라도, 호스트에서 띄운 앱은 host.docker.internal 로 접근 가능(맥/윈도우).
-  # Linux에서는 아래 주석 참고.
+  # 3) demo-backend 앱 메트릭 (/metrics)
+  # 같은 compose 네트워크이므로 서비스명으로 접근
   - job_name: demo-backend
-    metrics_path: /metrics
+    metrics_path: /metrics               # 백엔드가 다른 경로면 변경
     static_configs:
-      - targets:
-          - 'host.docker.internal:8080'  # ← 앱이 로컬 호스트 8080일 때
-    relabel_configs:
-      - target_label: service
-        replacement: demo-backend
-
-# (Linux 팁)
-# - Linux는 'host.docker.internal' 이 기본적으로 안 먹을 수 있습니다.
-#   1) prometheus 서비스에 extra_hosts 추가:
-#      extra_hosts:
-#        - "host.docker.internal:172.17.0.1"
-#   2) 혹은 demo-backend와 prometheus를 같은 브리지 네트워크에 올리고
-#      targets: ['demo-backend:8080'] 로 변경
+      - targets: ['backend:8080']        # docker-compose의 backend 서비스명
+        labels:
+          service: demo-backend

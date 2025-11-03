@@ -1,14 +1,31 @@
 services:
+  backend:
+    # 둘 중 하나만 사용하세요 (compose가 Dockerfile과 같은 폴더면 build: .).
+    build: "C:/Users/shinw/demo-backend"
+    # image: your-registry/demo-backend:latest
+    container_name: backend
+    ports: ["8080:8080"]
+    networks: [monitoring]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+    # 앱은 컨테이너 내부에서 0.0.0.0:8080 으로 리슨해야 합니다.
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: cadvisor
     privileged: true
-    ports: ["8081:8080"]   # cAdvisor UI/metrics
+    ports: ["8081:8080"]
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    networks: [monitoring]
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:v2.55.0
@@ -16,12 +33,20 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=7d"   # 보존기간 짧게
+      - "--storage.tsdb.retention.time=24h"     # 요청: 저장기한 짧게
+      - "--web.enable-lifecycle"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports: ["9090:9090"]
-    depends_on: [cadvisor]
+    depends_on: [cadvisor, backend]
+    networks: [monitoring]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/ready"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
 
   loki:
     image: grafana/loki:2.9.6
@@ -30,6 +55,8 @@ services:
     volumes:
       - ./loki-config.yml:/etc/loki/config.yml:ro
       - loki_data:/loki
+    networks: [monitoring]
+    restart: unless-stopped
     # 필요 시 외부 노출
     # ports: ["3100:3100"]
 
@@ -37,12 +64,13 @@ services:
     image: grafana/promtail:2.9.6
     container_name: promtail
     command: -config.file=/etc/promtail/config.yml
-    # 도커 SD(컨테이너 자동 발견) + JSON 로그 파일 접근
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./promtail-config.yml:/etc/promtail/config.yml:ro
     depends_on: [loki]
+    networks: [monitoring]
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:11.2.2
@@ -52,7 +80,12 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     ports: ["3001:3000"]
     depends_on: [prometheus, loki]
+    networks: [monitoring]
+    restart: unless-stopped
 
 volumes:
   prometheus_data:
   loki_data:
+
+networks:
+  monitoring: {}
