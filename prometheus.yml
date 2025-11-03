@@ -1,5 +1,5 @@
 global:
-  # 팀 요청 반영: 수집 주기 60초
+  # 수집 주기 60초
   scrape_interval: 60s
 
 scrape_configs:
