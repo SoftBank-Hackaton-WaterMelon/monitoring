@@ -4,26 +4,33 @@ server:
   http_listen_port: 3100
 
 common:
-  path_prefix: /loki
-  storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
-  ring:
-    instance_addr: 0.0.0.0
-    kvstore:
-      store: inmemory
+  path: /loki
   replication_factor: 1
 
 schema_config:
   configs:
-    - from: 2020-10-24
+    - from: 2024-01-01
       store: boltdb-shipper
       object_store: filesystem
-      schema: v13
+      schema: v12
       index:
         prefix: index_
         period: 24h
 
-ruler:
-  alertmanager_url: ""
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+# 로그 보존을 짧게(예: 7일)
+limits_config:
+  retention_period: 168h   # 7d
+
+compactor:
+  working_directory: /loki/compactor
+  compactor_ring:
+    kvstore:
+      store: inmemory
+  retention_enabled: true
