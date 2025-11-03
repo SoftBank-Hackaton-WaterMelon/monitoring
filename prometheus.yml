@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # 1️⃣ Prometheus 자기 자신
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          app: "prometheus"
+
+  # 2️⃣ Next.js 앱 메트릭
+  - job_name: "nextjs"
+    metrics_path: "/api/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:3001"]
