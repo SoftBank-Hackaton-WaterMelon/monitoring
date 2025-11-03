@@ -1,24 +1,16 @@
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: []
-
-rule_files: []
 
 scrape_configs:
-  # 1️⃣ Prometheus 자기 자신
-  - job_name: "prometheus"
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ["localhost:9090"]
-        labels:
-          app: "prometheus"
+      - targets: ['prometheus:9090']
 
-  # 2️⃣ Next.js 앱 메트릭
-  - job_name: "nextjs"
-    metrics_path: "/api/metrics"
+  - job_name: 'cadvisor'
     static_configs:
-      - targets: ["host.docker.internal:3001"]
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'demo-backend'
+    static_configs:
+      - targets: ['host.docker.internal:8080']  # 로컬에서 앱이 호스트 8080일 때
+    metrics_path: /metrics
