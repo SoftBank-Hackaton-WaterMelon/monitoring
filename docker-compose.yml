@@ -1,8 +1,11 @@
+version: "3.9"
+
 services:
   backend:
-    # 둘 중 하나만 사용하세요 (compose가 Dockerfile과 같은 폴더면 build: .).
-    build: "C:/Users/shinw/demo-backend"
-    # image: your-registry/demo-backend:latest
+    # 로컬 빌드 대신 GHCR 이미지를 사용합니다.
+    image: ghcr.io/softbank-hackaton-watermelon/demo-backend:latest
+    # 최신 태그는 항상 새 이미지를 받도록 pull_policy를 권장합니다.
+    pull_policy: always
     container_name: backend
     ports: ["8080:8080"]
     networks: [monitoring]
@@ -33,7 +36,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=24h"     # 요청: 저장기한 짧게
+      - "--storage.tsdb.retention.time=24h"     # 저장기한 짧게
       - "--web.enable-lifecycle"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro

@@ -1,12 +1,12 @@
 global:
-  # 수집 주기 60초 (요청 반영)
+  # 수집 주기 60초
   scrape_interval: 60s
-  # 룰 평가 주기 (옵션)
+  # 룰 평가 주기
   evaluation_interval: 60s
-  # 스크랩 타임아웃 (옵션)
+  # 스크랩 타임아웃
   scrape_timeout: 10s
 
-# (옵션) 외부 라벨: 여러 프로메테우스를 모을 때 구분용
+# 외부 라벨: 여러 프로메테우스를 모을 때 구분용
 # external_labels:
 #   cluster: local-dev
 
